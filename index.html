@@ -1310,7 +1310,7 @@
                 data: {
                     labels: ['Prix minimal', 'Prix maximal', 'Prix moyen'],
                     datasets: [{
-                        label: 'Prix (Ar)',
+
                         data: [min, max, avg],
                         backgroundColor: [
                             '#10b981', // vert pour min
@@ -1320,6 +1320,13 @@
                         borderRadius: 8,
                         borderWidth: 0
                     }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
                 }
             });
         }
