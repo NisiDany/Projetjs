@@ -81,18 +81,25 @@
             margin-bottom: 4px;
             cursor: pointer;
             font-size: 16px;
-            transition: background 0.2s, box-shadow 0.2s;
+            transition: all 0.3s ease;
             text-align: left;
+            transform: translateY(0);
         }
 
         .menu-item svg {
             width: 20px;
             height: 20px;
+            transition: transform 0.3s ease;
         }
 
         .menu-item:hover {
             background: linear-gradient(45deg, #818cf8, #22d3ee);
-            box-shadow: 0 2px 8px #a5b4fc44;
+            box-shadow: 0 5px 15px rgba(101, 116, 252, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .menu-item:hover svg {
+            transform: scale(1.1);
         }
 
         .menu-item.active {
@@ -133,12 +140,12 @@
         }
 
         .equation input[type="number"] {
-            width: 60px;
-            padding: 6px;
+            width: 100px;
+            padding: 10px;
             border: 2px solid #ddd;
             border-radius: 8px;
             text-align: center;
-            font-size: 14px;
+            font-size: 16px;
             box-sizing: border-box;
         }
 
@@ -302,8 +309,12 @@
 
         .total-row {
             background: #6366f1 !important;
-            color: #fff !important;
+            color: white !important;
             font-weight: bold;
+        }
+
+        .total-row td {
+            color: white !important;
         }
 
         .add-product-btn {
@@ -448,6 +459,29 @@
             background: #fff;
         }
 
+        /* Responsive pagination buttons sous le tableau */
+        #prevPageBtn,
+        #nextPageBtn,
+        #paginationNumbers button {
+            transition: background 0.2s, color 0.2s, transform 0.15s;
+        }
+
+        #prevPageBtn:hover:not(:disabled),
+        #nextPageBtn:hover:not(:disabled),
+        #paginationNumbers button:hover:not(:disabled) {
+            background: #6366f1;
+            color: #fff;
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 2px 8px #6366f133;
+        }
+
+        #prevPageBtn:disabled,
+        #nextPageBtn:disabled,
+        #paginationNumbers button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .solve-btn {
             background: linear-gradient(90deg, #6366f1 60%, #06b6d4 100%);
             color: #fff;
@@ -463,10 +497,38 @@
             transition: background 0.2s, transform 0.2s;
         }
 
+        .edit-btn,
+        .delete-btn,
+        #rowsPerPage {
+            transition: background 0.2s, transform 0.15s, box-shadow 0.15s;
+        }
+
+        .edit-btn:hover,
+        .delete-btn:hover {
+            transform: translateY(-2px) scale(1.08);
+            box-shadow: 0 2px 8px #6366f133;
+        }
+
+        #rowsPerPage:hover {
+            background: #e0e7ef;
+            box-shadow: 0 2px 8px #6366f133;
+            outline: none;
+        }
+
         .solve-btn:hover {
             background: linear-gradient(90deg, #818cf8 60%, #22d3ee 100%);
             transform: translateY(-2px) scale(1.03);
             box-shadow: 0 4px 16px #6366f144;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
@@ -548,6 +610,11 @@
 
 
                     <button class="solve-btn" onclick="solveCramer()">RÉSOUDRE</button>
+                    <div id="cramer-loader" style="display:none; text-align:center; margin:15px 0;">
+                        <span
+                            style="display:inline-block; width:32px; height:32px; border:4px solid #6366f1; border-top:4px solid #fff; border-radius:50%; animation: spin 1s linear infinite;"></span>
+                        <p style="color:#6366f1; margin-top:8px;">Calcul en cours...</p>
+                    </div>
 
                     <div id="cramer-result" class="result" style="display: none;"></div>
                 </div>
@@ -634,15 +701,31 @@
                         <button class="add-product-btn" onclick="addProduct()">AJOUTER PRODUIT</button>
 
                         <!-- Barre de recherche pour la désignation -->
-                        <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                                stroke="#6c5ce7" width="22" height="22" style="flex-shrink:0;">
-                                <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none" />
-                                <line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" />
-                            </svg>
-                            <input type="text" id="searchDesignation" placeholder="Rechercher un produit."
-                                style="width: 250px; padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; flex-wrap: wrap; gap: 8px;">
+                            <!-- Afficher à gauche -->
+                            <div>
+                                <label for="rowsPerPage" style="font-weight:bold;">Afficher</label>
+                                <select id="rowsPerPage"
+                                    style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc;">
+                                    <option value="5">5</option>
+                                    <option value="10" selected>10</option>
+                                    <option value="15">15</option>
+                                    <option value="20">20</option>
+                                </select>
+                                <span>éléments</span>
+                            </div>
+                            <!-- Barre de recherche à droite -->
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                    stroke="#6c5ce7" width="22" height="22" style="flex-shrink:0;">
+                                    <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none" />
+                                    <line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" />
+                                </svg>
+                                <input type="text" id="searchDesignation" placeholder="Rechercher un produit."
+                                    style="width: 250px; padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+                            </div>
                         </div>
 
                         <table class="products-table" id="productsTable">
@@ -772,6 +855,19 @@
                             </tfoot>
                         </table>
 
+                        <div
+                            style="display: flex; align-items: center; justify-content: flex-end; margin: 18px 0 10px 0; gap: 10px;">
+                            <button id="prevPageBtn"
+                                style="padding: 6px 14px; border-radius: 6px; border: 1px solid #6366f1; background: #fff; color: #6366f1; font-weight: bold; cursor: pointer;">
+                                Précédent
+                            </button>
+                            <span id="paginationNumbers" style="display: flex; gap: 4px;"></span>
+                            <button id="nextPageBtn"
+                                style="padding: 6px 14px; border-radius: 6px; border: 1px solid #6366f1; background: #fff; color: #6366f1; font-weight: bold; cursor: pointer;">
+                                Suivant
+                            </button>
+                        </div>
+
                         <div class="calculations-section">
                             <div class="calculations-grid">
                                 <div class="calc-field">
@@ -795,6 +891,8 @@
                             <h3>GRAPHIQUE DES PRODUITS</h3>
                             <canvas id="productsChart" width="400" height="200"></canvas>
                         </div>
+
+
                     </div>
                 </div>
             </div>
@@ -814,6 +912,8 @@
         let currentLayer = 0;
         let productsChart = null;
         let rotationSpeed = 3000;
+        let currentPage = 1;
+        let rowsPerPage = 10;
 
         // Fonction pour afficher une page
         function showPage(pageId) {
@@ -857,57 +957,94 @@
         });
         // Fonction pour résoudre le système par Cramer
         function solveCramer() {
-            // Récupérer les coefficients
-            const a11 = parseFloat(document.getElementById('a11').value) || 0;
-            const a12 = parseFloat(document.getElementById('a12').value) || 0;
-            const a13 = parseFloat(document.getElementById('a13').value) || 0;
-            const b1 = parseFloat(document.getElementById('b1').value) || 0;
+            const btn = document.querySelector('.solve-btn');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<span style="display:inline-block; width:20px; height:20px; border:3px solid #fff; border-top:3px solid #6366f1; border-radius:50%; animation: spin 1s linear infinite; vertical-align:middle; margin-right:8px;"></span>Chargement...`;
 
-            const a21 = parseFloat(document.getElementById('a21').value) || 0;
-            const a22 = parseFloat(document.getElementById('a22').value) || 0;
-            const a23 = parseFloat(document.getElementById('a23').value) || 0;
-            const b2 = parseFloat(document.getElementById('b2').value) || 0;
+            document.getElementById('cramer-result').style.display = 'none';
 
-            const a31 = parseFloat(document.getElementById('a31').value) || 0;
-            const a32 = parseFloat(document.getElementById('a32').value) || 0;
-            const a33 = parseFloat(document.getElementById('a33').value) || 0;
-            const b3 = parseFloat(document.getElementById('b3').value) || 0;
+            setTimeout(() => {
+                // Récupérer les coefficients
+                const a11 = parseFloat(document.getElementById('a11').value) || 0;
+                const a12 = parseFloat(document.getElementById('a12').value) || 0;
+                const a13 = parseFloat(document.getElementById('a13').value) || 0;
+                const b1 = parseFloat(document.getElementById('b1').value) || 0;
 
-            // Calculer le déterminant principal
-            const det = a11 * (a22 * a33 - a23 * a32) - a12 * (a21 * a33 - a23 * a31) + a13 * (a21 * a32 - a22 * a31);
+                const a21 = parseFloat(document.getElementById('a21').value) || 0;
+                const a22 = parseFloat(document.getElementById('a22').value) || 0;
+                const a23 = parseFloat(document.getElementById('a23').value) || 0;
+                const b2 = parseFloat(document.getElementById('b2').value) || 0;
 
-            if (Math.abs(det) < 1e-10) {
-                document.getElementById('cramer-result').innerHTML =
-                    '<h3 style="color: #e74c3c;">❌ Erreur</h3><p>Le système n\'a pas de solution unique (déterminant = 0)</p>';
+                const a31 = parseFloat(document.getElementById('a31').value) || 0;
+                const a32 = parseFloat(document.getElementById('a32').value) || 0;
+                const a33 = parseFloat(document.getElementById('a33').value) || 0;
+                const b3 = parseFloat(document.getElementById('b3').value) || 0;
+
+                // Calculer le déterminant principal
+                const det = a11 * (a22 * a33 - a23 * a32) - a12 * (a21 * a33 - a23 * a31) + a13 * (a21 * a32 - a22 * a31);
+
+                if (Math.abs(det) < 1e-10) {
+                    document.getElementById('cramer-result').innerHTML =
+                        '<h3 style="color: #e74c3c;">❌ Erreur</h3><p>Le système n\'a pas de solution unique (déterminant = 0)</p>';
+                    document.getElementById('cramer-result').style.display = 'block';
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                    return;
+                }
+
+                // Calculer les déterminants pour X1, X2, X3
+                const det1 = b1 * (a22 * a33 - a23 * a32) - a12 * (b2 * a33 - a23 * b3) + a13 * (b2 * a32 - a22 * b3);
+                const det2 = a11 * (b2 * a33 - a23 * b3) - b1 * (a21 * a33 - a23 * a31) + a13 * (a21 * b3 - b2 * a31);
+                const det3 = a11 * (a22 * b3 - b2 * a32) - a12 * (a21 * b3 - b2 * a31) + b1 * (a21 * a32 - a22 * a31);
+
+                // Calculer les solutions
+                const x1 = det1 / det;
+                const x2 = det2 / det;
+                const x3 = det3 / det;
+
+                // Afficher les résultats
+                document.getElementById('cramer-result').innerHTML = `
+            <h3 style="color: #00b894;">✅ Solutions trouvées</h3>
+            <p><strong>Déterminant principal (Δ) :</strong> ${det.toFixed(4)}</p>
+            <div style="margin: 15px 0; padding: 15px; background: #e8f8f5; border-radius: 8px;">
+                <p><strong>x = Δ₁/Δ = </strong>${x1.toFixed(4)}</p>
+                <p><strong>y = Δ₂/Δ = </strong>${x2.toFixed(4)}</p>
+                <p><strong>z = Δ₃/Δ = </strong>${x3.toFixed(4)}</p>
+            </div>
+            <p><strong>Vérification :</strong></p>
+            <p>${a11.toFixed(2)} × ${x1.toFixed(2)} + ${a12.toFixed(2)} × ${x2.toFixed(2)} + ${a13.toFixed(2)} × ${x3.toFixed(2)} = ${(a11 * x1 + a12 * x2 + a13 * x3).toFixed(2)} (devrait être ${b1})</p>
+            <p>${a21.toFixed(2)} × ${x1.toFixed(2)} + ${a22.toFixed(2)} × ${x2.toFixed(2)} + ${a23.toFixed(2)} × ${x3.toFixed(2)} = ${(a21 * x1 + a22 * x2 + a23 * x3).toFixed(2)} (devrait être ${b2})</p>
+            <p>${a31.toFixed(2)} × ${x1.toFixed(2)} + ${a32.toFixed(2)} × ${x2.toFixed(2)} + ${a33.toFixed(2)} × ${x3.toFixed(2)} = ${(a31 * x1 + a32 * x2 + a33 * x3).toFixed(2)} (devrait être ${b3})</p>
+        `;
                 document.getElementById('cramer-result').style.display = 'block';
-                return;
-            }
-
-            // Calculer les déterminants pour X1, X2, X3
-            const det1 = b1 * (a22 * a33 - a23 * a32) - a12 * (b2 * a33 - a23 * b3) + a13 * (b2 * a32 - a22 * b3);
-            const det2 = a11 * (b2 * a33 - a23 * b3) - b1 * (a21 * a33 - a23 * a31) + a13 * (a21 * b3 - b2 * a31);
-            const det3 = a11 * (a22 * b3 - b2 * a32) - a12 * (a21 * b3 - b2 * a31) + b1 * (a21 * a32 - a22 * a31);
-
-            // Calculer les solutions
-            const x1 = det1 / det;
-            const x2 = det2 / det;
-            const x3 = det3 / det;
-
-            // Afficher les résultats
-            document.getElementById('cramer-result').innerHTML = `
-                <h3 style="color: #00b894;">✅ Solutions trouvées</h3>
-                <p><strong>Déterminant principal (Δ) :</strong> ${det.toFixed(4)}</p>
-                <div style="margin: 15px 0; padding: 15px; background: #e8f8f5; border-radius: 8px;">
-                    <p><strong>x = Δ₁/Δ = </strong>${x1.toFixed(4)}</p>
-                    <p><strong>y = Δ₂/Δ = </strong>${x2.toFixed(4)}</p>
-                    <p><strong>z = Δ₃/Δ = </strong>${x3.toFixed(4)}</p>
-                </div>
-                <p><strong>Vérification :</strong></p>
-                <p>${a11.toFixed(2)} × ${x1.toFixed(2)} + ${a12.toFixed(2)} × ${x2.toFixed(2)} + ${a13.toFixed(2)} × ${x3.toFixed(2)} = ${(a11 * x1 + a12 * x2 + a13 * x3).toFixed(2)} (devrait être ${b1})</p>
-                <p>${a21.toFixed(2)} × ${x1.toFixed(2)} + ${a22.toFixed(2)} × ${x2.toFixed(2)} + ${a23.toFixed(2)} × ${x3.toFixed(2)} = ${(a21 * x1 + a22 * x2 + a23 * x3).toFixed(2)} (devrait être ${b2})</p>
-                <p>${a31.toFixed(2)} × ${x1.toFixed(2)} + ${a32.toFixed(2)} × ${x2.toFixed(2)} + ${a33.toFixed(2)} × ${x3.toFixed(2)} = ${(a31 * x1 + a32 * x2 + a33 * x3).toFixed(2)} (devrait être ${b3})</p>
-            `;
-            document.getElementById('cramer-result').style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }, 1000);
+        }
+        function enableCramerEnterNavigation() {
+            // Liste des IDs dans l'ordre
+            const ids = [
+                'a11', 'a12', 'a13', 'b1',
+                'a21', 'a22', 'a23', 'b2',
+                'a31', 'a32', 'a33', 'b3'
+            ];
+            ids.forEach((id, idx) => {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.addEventListener('keydown', function (e) {
+                        if (e.key === "Enter") {
+                            e.preventDefault();
+                            if (idx < ids.length - 1) {
+                                document.getElementById(ids[idx + 1]).focus();
+                            } else {
+                                // Dernier champ : lance la résolution
+                                document.querySelector('.solve-btn').click();
+                            }
+                        }
+                    });
+                }
+            });
         }
 
         // Fonctions pour le redimensionnement d'image
@@ -1094,9 +1231,53 @@
             }
 
             updateChart();
+            renderTablePagination();
         }
 
 
+
+        function renderTablePagination() {
+            const tbody = document.getElementById('productsBody');
+            const allRows = Array.from(tbody.querySelectorAll('tr'));
+            const totalRows = allRows.length;
+            const totalPages = Math.max(1, Math.ceil(totalRows / rowsPerPage));
+            currentPage = Math.min(currentPage, totalPages);
+
+            // Affiche uniquement les lignes de la page courante
+            allRows.forEach((row, idx) => {
+                if (idx >= (currentPage - 1) * rowsPerPage && idx < currentPage * rowsPerPage) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Pagination numérotée
+            const paginationNumbers = document.getElementById('paginationNumbers');
+            paginationNumbers.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.textContent = i;
+                pageBtn.style.padding = '4px 10px';
+                pageBtn.style.margin = '0 2px';
+                pageBtn.style.borderRadius = '5px';
+                pageBtn.style.border = '1px solid #6366f1';
+                pageBtn.style.background = (i === currentPage) ? '#6366f1' : '#fff';
+                pageBtn.style.color = (i === currentPage) ? '#fff' : '#6366f1';
+                pageBtn.style.fontWeight = 'bold';
+                pageBtn.style.cursor = 'pointer';
+                pageBtn.disabled = (i === currentPage);
+                pageBtn.addEventListener('click', function () {
+                    currentPage = i;
+                    renderTablePagination();
+                });
+                paginationNumbers.appendChild(pageBtn);
+            }
+
+            // Désactive les boutons si besoin
+            document.getElementById('prevPageBtn').disabled = currentPage === 1;
+            document.getElementById('nextPageBtn').disabled = currentPage === totalPages;
+        }
 
         function updateChart() {
             const canvas = document.getElementById('productsChart');
@@ -1139,23 +1320,6 @@
                         borderRadius: 8,
                         borderWidth: 0
                     }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: '#374151', font: { size: 14, weight: 'bold' } }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: '#e5e7eb' },
-                            ticks: { color: '#374151', font: { size: 13 } }
-                        }
-                    }
                 }
             });
         }
@@ -1164,6 +1328,8 @@
         document.addEventListener('DOMContentLoaded', function () {
             // Initialiser le redimensionneur d'image
             initImageResizer();
+            // Cramer
+            enableCramerEnterNavigation();
 
             // Démarrer la rotation du panneau
             startRotation();
@@ -1180,6 +1346,31 @@
                     startRotation();
                 }
             });
+
+            // Pagination : gestion des événements
+            document.getElementById('rowsPerPage').addEventListener('change', function () {
+                rowsPerPage = parseInt(this.value, 10);
+                currentPage = 1;
+                renderTablePagination();
+            });
+            document.getElementById('prevPageBtn').addEventListener('click', function () {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTablePagination();
+                }
+            });
+            document.getElementById('nextPageBtn').addEventListener('click', function () {
+                const tbody = document.getElementById('productsBody');
+                const totalRows = tbody.querySelectorAll('tr').length;
+                const totalPages = Math.max(1, Math.ceil(totalRows / rowsPerPage));
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTablePagination();
+                }
+            });
+
+            // Appel initial
+            renderTablePagination();
         });
 
         function editProduct(button) {
